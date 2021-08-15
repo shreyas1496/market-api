@@ -64,6 +64,10 @@ app.get("/data", async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
+app.get("/exit", () => {
+  process.exit(0);
+});
+
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   // Simple error handling here... in real life we might
   // want to be more specific
