@@ -2,6 +2,7 @@ require("dotenv").config();
 import express, { Application, NextFunction, Request, Response } from "express";
 import fs from "fs";
 import https from "https";
+import { Calculator } from "./calculator";
 import { KiteClient } from "./clients";
 
 const app: Application = express();
@@ -32,7 +33,7 @@ app.get(
       const { response } = await kite.generateSession(requestToken);
       console.log(response);
 
-      res.send(`Hello ${response?.user_name}`);
+      res.send(`Hello ${response}`);
     } catch (error) {
       next(error);
     }
@@ -42,6 +43,16 @@ app.get(
 app.get("/self", async (req: Request, res: Response, next: NextFunction) => {
   try {
     await kite.getProfile().then((response) => res.send(response));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/data", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const calc = new Calculator(kite);
+
+    res.json(await calc.getData());
   } catch (error) {
     next(error);
   }

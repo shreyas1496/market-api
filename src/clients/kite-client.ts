@@ -23,11 +23,10 @@ interface LoginSuccess {
 export class KiteClient {
   instance: any;
 
-  constructor() {
-    this.instance = new KiteConnect({ api_key: process.env.API_KEY });
-  }
+  constructor() {}
 
   getLoginUrl = (): string => {
+    this.instance = new KiteConnect({ api_key: process.env.API_KEY });
     return this.instance.getLoginURL();
   };
 
@@ -46,4 +45,16 @@ export class KiteClient {
   };
 
   getProfile = (): Promise<unknown> => this.instance.getProfile();
+
+  getDailyHistoricalData = (
+    instToken: string,
+    days: number = 60
+  ): Promise<any> => {
+    const to = new Date();
+    const from = new Date(new Date().setDate(to.getDate() - days));
+    console.log(to, from);
+
+    // return Promise.resolve({ to, from });
+    return this.instance.getHistoricalData(instToken, "day", from, to, true);
+  };
 }
