@@ -33,7 +33,7 @@ app.get(
       const { response } = await kite.generateSession(requestToken);
       console.log(response);
 
-      res.send(`Hello ${response}`);
+      res.send(`Hello ${JSON.stringify(response)}`);
     } catch (error) {
       next(error);
     }
