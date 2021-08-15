@@ -1,1 +1,1 @@
-export { KiteClient } from "./kite-client";
+export * from "./kite-client";

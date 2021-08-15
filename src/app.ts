@@ -16,6 +16,7 @@ const options = {
 
 const port: number = parseInt(process.env.PORT || "8080");
 const kite = new KiteClient();
+let failureCounter = 0;
 
 app.get("/toto", (req: Request, res: Response) => {
   res.send("Hello toto");
@@ -31,9 +32,7 @@ app.get(
     try {
       const requestToken = req.query.request_token as string;
       const { response } = await kite.generateSession(requestToken);
-      console.log(response);
-
-      res.send(`Hello ${JSON.stringify(response)}`);
+      res.redirect("/data");
     } catch (error) {
       next(error);
     }
@@ -51,10 +50,17 @@ app.get("/self", async (req: Request, res: Response, next: NextFunction) => {
 app.get("/data", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const calc = new Calculator(kite);
+    console.log("in data");
 
     res.json(await calc.getData());
   } catch (error) {
-    next(error);
+    failureCounter++;
+    if (failureCounter < 6) {
+      res.redirect("/init");
+    } else {
+      failureCounter = 0;
+      next(error);
+    }
   }
 });
 
@@ -62,7 +68,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   // Simple error handling here... in real life we might
   // want to be more specific
   const message = JSON.stringify(err);
-  console.error(`I'm the error handler ${message}`);
+  console.trace(err);
   res.status(500);
   res.send(message);
 });

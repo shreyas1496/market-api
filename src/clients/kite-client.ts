@@ -20,6 +20,15 @@ interface LoginSuccess {
   };
 }
 
+export interface HistRes {
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
 export class KiteClient {
   instance: any;
 
@@ -48,13 +57,15 @@ export class KiteClient {
 
   getDailyHistoricalData = (
     instToken: string,
-    days: number = 60
-  ): Promise<any> => {
+    days: number = 100
+  ): Promise<HistRes[]> => {
     const to = new Date();
     const from = new Date(new Date().setDate(to.getDate() - days));
     console.log(to, from);
 
     // return Promise.resolve({ to, from });
-    return this.instance.getHistoricalData(instToken, "day", from, to, true);
+    return this.instance
+      .getHistoricalData(instToken, "day", from, to, true)
+      .then((result: HistRes[]) => result.reverse());
   };
 }
