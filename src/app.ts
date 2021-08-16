@@ -4,6 +4,7 @@ import fs from "fs";
 import https from "https";
 import { Calculator } from "./calculator";
 import { KiteClient } from "./clients";
+import cors from "cors";
 
 const app: Application = express();
 
@@ -13,6 +14,8 @@ const options = {
   key: key,
   cert: cert,
 };
+
+app.use(cors());
 
 const port: number = parseInt(process.env.PORT || "8080");
 const kite = new KiteClient();
