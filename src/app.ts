@@ -17,6 +17,7 @@ const options = {
 const port: number = parseInt(process.env.PORT || "8080");
 const kite = new KiteClient();
 let failureCounter = 0;
+let history = {};
 
 app.get("/toto", (req: Request, res: Response) => {
   res.send("Hello toto");
@@ -48,21 +49,33 @@ app.get("/self", async (req: Request, res: Response, next: NextFunction) => {
 });
 
 app.get("/data", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const calc = new Calculator(kite);
-    console.log("in data");
+  // try {
+  //   const calc = new Calculator(kite);
+  //   console.log("in data");
 
-    res.json(await calc.getData());
-  } catch (error) {
-    failureCounter++;
-    if (failureCounter < 6) {
-      res.redirect("/init");
-    } else {
-      failureCounter = 0;
-      next(error);
-    }
-  }
+  //   res.json(await calc.getData());
+  // } catch (error) {
+  //   failureCounter++;
+  //   if (failureCounter < 6) {
+  //     res.redirect("/init");
+  //   } else {
+  //     failureCounter = 0;
+  //     next(error);
+  //   }
+  // }
+  res.json(history);
 });
+
+setInterval(() => {
+  const calc = new Calculator(kite);
+  console.log("fetching...");
+
+  calc.getData().then((res) => {
+    console.log("history set", new Date());
+
+    history = res;
+  });
+}, 90000);
 
 app.get("/exit", () => {
   process.exit(0);

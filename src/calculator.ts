@@ -65,8 +65,8 @@ export class Calculator {
 
   getData = async () => {
     const table = await Promise.all(
-      Object.entries(this.TOKENS).map(([name, token]) => {
-        return this.kite.getDailyHistoricalData(token).then((res) => ({
+      Object.entries(this.TOKENS).map(([name, token], index) => {
+        return this.kite.getDailyHistoricalData(token, index).then((res) => ({
           data: res,
           name,
         }));

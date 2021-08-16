@@ -32,10 +32,11 @@ export interface HistRes {
 export class KiteClient {
   instance: any;
 
-  constructor() {}
+  constructor() {
+    this.instance = new KiteConnect({ api_key: process.env.API_KEY });
+  }
 
   getLoginUrl = (): string => {
-    this.instance = new KiteConnect({ api_key: process.env.API_KEY });
     return this.instance.getLoginURL();
   };
 
@@ -57,15 +58,23 @@ export class KiteClient {
 
   getDailyHistoricalData = (
     instToken: string,
+    index: number,
     days: number = 100
   ): Promise<HistRes[]> => {
-    const to = new Date();
-    const from = new Date(new Date().setDate(to.getDate() - days));
-    console.log(to, from);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const today = new Date();
+        const to = new Date(today.setDate(today.getDate() + 1));
+        const from = new Date(new Date().setDate(to.getDate() - days));
+        // console.log(to, from);
 
-    // return Promise.resolve({ to, from });
-    return this.instance
-      .getHistoricalData(instToken, "day", from, to, true)
-      .then((result: HistRes[]) => result.reverse());
+        // return Promise.resolve({ to, from });
+        return resolve(
+          this.instance
+            .getHistoricalData(instToken, "day", from, to, true)
+            .then((result: HistRes[]) => result.reverse())
+        );
+      }, 450 * index);
+    });
   };
 }
