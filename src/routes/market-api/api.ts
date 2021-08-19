@@ -28,7 +28,7 @@ marketApiRouter.get(
     try {
       const requestToken = req.query.request_token as string;
       const { response } = await kite.generateSession(requestToken);
-      intervalId = window.setInterval(update, 90000);
+      intervalId = setInterval(update, 90000) as unknown as number;
 
       res.send(`Welcome ${response.user_name}`);
     } catch (error) {
