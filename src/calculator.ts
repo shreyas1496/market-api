@@ -73,7 +73,7 @@ export class Calculator {
       })
     );
 
-    const avtTable = table.map(({ data, name }) => {
+    return table.map(({ data, name }) => {
       return {
         name,
         ltp: data[0].close,
@@ -82,8 +82,6 @@ export class Calculator {
         ma10: this.avg(10, data),
       };
     });
-
-    return orderBy(avtTable, "ma44.closeness", "asc");
   };
 
   private avg(duration: number, data: HistRes[]): Comparison {

@@ -1,0 +1,7 @@
+Start and stop data fetching automatically
+Design table structure
+Create notification service
+    Create FCM project
+    Build webview app
+    Extract fcm token from user
+    
