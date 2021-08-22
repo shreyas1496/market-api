@@ -77,9 +77,10 @@ export class Calculator {
       return {
         name,
         ltp: data[0].close,
-        ma44: this.avg(44, data),
-        ma20: this.avg(20, data),
-        ma10: this.avg(10, data),
+        prevClose: data[1].close,
+        ma44: this.actualAvg(44, data),
+        ma20: this.actualAvg(20, data),
+        ma10: this.actualAvg(10, data),
       };
     });
   };
@@ -98,5 +99,9 @@ export class Calculator {
       diff,
       closeness,
     };
+  }
+
+  private actualAvg(duration: number, data: HistRes[]): number {
+    return this.avg(duration, data).average;
   }
 }
