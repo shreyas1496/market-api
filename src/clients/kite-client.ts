@@ -1,6 +1,5 @@
 // @ts-ignore
 import { KiteConnect } from "kiteconnect";
-import { kill } from "process";
 
 interface LoginSuccess {
   response: {
