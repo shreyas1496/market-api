@@ -1,12 +1,13 @@
-import EventEmitter from "events";
-import { ACTIVE_USER_CLEANUP_EVENT } from "~/constants";
+import { Service } from "typedi";
 
+@Service()
 export class ActiveUsers {
   private liveMap: Record<string, number> = {};
   static MAX_SCORE = 12;
+  static DECREMENT_AFTER = 60 * 60 * 1000;
 
-  constructor(emitter: EventEmitter) {
-    emitter.on(ACTIVE_USER_CLEANUP_EVENT, this.decrementScore);
+  constructor() {
+    this._init();
   }
 
   add = (token: string) => {
@@ -29,5 +30,9 @@ export class ActiveUsers {
 
   getActive = (): string[] => {
     return Object.keys(this.liveMap);
+  };
+
+  _init = () => {
+    setInterval(this.decrementScore, ActiveUsers.DECREMENT_AFTER);
   };
 }

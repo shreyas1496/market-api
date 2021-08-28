@@ -1,24 +1,12 @@
 import { NextFunction, Request, Response, Router } from "express";
-import { app } from "./app";
+import Container from "typedi";
 import { KiteClient } from "./clients";
-import { ACTIVE_USERS } from "./constants";
 import { ActiveUsers, Calculator } from "./utils";
 
-const kite = new KiteClient();
-let history: unknown[] = [];
-let intervalId: unknown;
 export const marketApiRouter = Router();
-
-const update = () => {
-  const calc = new Calculator(kite);
-  console.log("fetching...", new Date());
-
-  calc.getData().then((res) => {
-    console.log("history set", new Date());
-
-    history = res;
-  });
-};
+const kite = Container.get(KiteClient);
+const activeUsers = Container.get(ActiveUsers);
+const calculator = Container.get(Calculator);
 
 marketApiRouter.get("/init", (_req: Request, res: Response) => {
   res.redirect(kite.getLoginUrl());
@@ -30,8 +18,6 @@ marketApiRouter.get(
     try {
       const requestToken = req.query.request_token as string;
       const { response } = await kite.generateSession(requestToken);
-      update();
-      intervalId = setInterval(update, 70000) as unknown as number;
 
       res.send(`Welcome ${response.user_name}`);
     } catch (error) {
@@ -41,17 +27,12 @@ marketApiRouter.get(
 );
 
 marketApiRouter.get("/data", async (_req: Request, res: Response) => {
-  res.json(history);
+  res.json(calculator.data());
 });
 
 marketApiRouter.post("/data", async (req: Request, res: Response) => {
-  (app.get(ACTIVE_USERS) as ActiveUsers).add(req.body["fcm-token"]);
-  res.json(history);
-});
-
-marketApiRouter.get("/clear", (_req: Request, res: Response) => {
-  clearInterval(intervalId as NodeJS.Timeout);
-  res.send(intervalId + "stopped");
+  activeUsers.add(req.body["fcm-token"]);
+  res.json(calculator.data());
 });
 
 marketApiRouter.use((err: Error, _req: Request, res: Response) => {

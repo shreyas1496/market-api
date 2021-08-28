@@ -1,12 +1,15 @@
+import { Service } from "typedi";
 import { HistRes, KiteClient } from "~/clients";
 import { SCRIPTS } from "~/constants";
 import { Comparison } from "~/types";
-export class Calculator {
-  kite: KiteClient;
 
-  constructor(kite: KiteClient) {
+@Service()
+export class Calculator {
+  constructor(private kite: KiteClient) {
     this.kite = kite;
   }
+
+  data = () => [];
 
   getData = async () => {
     const table = await Promise.all(

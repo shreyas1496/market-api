@@ -1,5 +1,6 @@
 // @ts-ignore
 import { KiteConnect } from "kiteconnect";
+import { Service } from "typedi";
 
 interface LoginSuccess {
   response: {
@@ -28,6 +29,7 @@ export interface HistRes {
   volume: number;
 }
 
+@Service()
 export class KiteClient {
   instance: any;
 
