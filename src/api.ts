@@ -17,9 +17,9 @@ marketApiRouter.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const requestToken = req.query.request_token as string;
-      const { response } = await kite.generateSession(requestToken);
+      calculator.startServer(requestToken);
 
-      res.send(`Welcome ${response.user_name}`);
+      res.send(`Welcome `);
     } catch (error) {
       next(error);
     }

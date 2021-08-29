@@ -3,3 +3,5 @@ export enum MovingAverageType {
   TWENTY = 20,
   TEN = 10,
 }
+
+export const movingAverageDurations = [44, 20, 10];

@@ -1,55 +1,102 @@
-import { Service } from "typedi";
-import { HistRes, KiteClient } from "~/clients";
+import _range from "lodash/range";
+import { Inject, Service } from "typedi";
+import { KiteClient } from "~/clients";
 import { SCRIPTS } from "~/constants";
-import { Comparison } from "~/types";
+import {
+  KiteTick,
+  movingAverageDurations,
+  MovingAverageValue,
+  TableRow,
+} from "~/types";
+import { formatResponseForUI } from ".";
 
 @Service()
 export class Calculator {
-  constructor(private kite: KiteClient) {
-    this.kite = kite;
-  }
+  static instrumentTableRowMap: Record<number, TableRow> = {};
 
-  data = () => [];
+  @Inject(() => KiteClient)
+  private kite!: KiteClient;
 
-  getData = async () => {
-    const table = await Promise.all(
-      Object.entries(SCRIPTS).map(([name, token], index) => {
-        return this.kite.getDailyHistoricalData(token, index).then((res) => ({
-          data: res,
-          name,
-        }));
+  data = () => formatResponseForUI(Calculator.instrumentTableRowMap);
+
+  startServer = async (requestToken: string): Promise<void> => {
+    return this.kite
+      .startKiteServer(requestToken, this.seedData, this.onTicks)
+      .catch(console.log);
+  };
+
+  private seedData = async (): Promise<void> => {
+    const raw = await Promise.all(
+      Object.entries(SCRIPTS).map(([name, instrumentToken], index) => {
+        return this.kite
+          .getDailyHistoricalData(instrumentToken, index)
+          .then((res) => ({
+            data: res,
+            name,
+            instrumentToken,
+          }));
       })
     );
 
-    return table.map(({ data, name }) => {
-      return {
+    raw.forEach(({ data, name, instrumentToken }) => {
+      const closeHistory = data.map((hist) => hist.close);
+      Calculator.instrumentTableRowMap[instrumentToken] = this.getTableRow(
+        instrumentToken,
         name,
-        ltp: data?.[0]?.close,
-        prevClose: data?.[1]?.close,
-        ma44: this.actualAvg(44, data),
-        ma20: this.actualAvg(20, data),
-        ma10: this.actualAvg(10, data),
-      };
+        closeHistory
+      );
     });
+    console.log("seeding complete");
   };
 
-  private avg(duration: number, data: HistRes[]): Comparison {
-    const ltp = data?.[0]?.close ?? 1;
-    const range = data.slice(0, duration).map(({ close }) => close);
-    const sum = range.reduce((acc, value) => acc + value, 0);
-    const average = sum / duration;
-    const diff = Math.abs(average - ltp);
+  private getTableRow = (
+    instrumentToken: number,
+    name: string,
+    closeHistory: number[]
+  ): TableRow => {
+    const ltp = closeHistory[0] ?? 1;
+    const movingAverageValues = movingAverageDurations.map<MovingAverageValue>(
+      (duration) => {
+        const history: number[] = [];
+        let counter = 0;
+        let leads = 0;
 
-    const closeness = (diff / ltp) * 100;
+        while (counter < duration) {
+          const sum = closeHistory
+            .slice(counter, counter + duration)
+            .reduce((a, b) => a + b, 0);
+
+          const avg = sum / duration;
+          history.push(avg);
+          if ((closeHistory[counter] as number) > avg) {
+            leads++;
+          }
+          counter++;
+        }
+
+        return {
+          duration,
+          history,
+          leads,
+        };
+      }
+    );
 
     return {
-      average,
-      diff,
-      closeness,
+      instrumentToken,
+      name,
+      ltp,
+      closeHistory,
+      movingAverageValues,
     };
-  }
+  };
 
-  private actualAvg(duration: number, data: HistRes[]): number {
-    return this.avg(duration, data).average;
-  }
+  private onTicks = (ticks: KiteTick[]): void => {
+    ticks.forEach(({ instrumentToken, lastPrice }) => {
+      const entry = Calculator.instrumentTableRowMap[instrumentToken];
+      if (entry) {
+        entry.ltp = lastPrice;
+      }
+    });
+  };
 }
