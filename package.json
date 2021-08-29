@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon -e ts,js --exec ts-node -r tsconfig-paths/register src/app.ts",
     "build": "tsc && tscpaths -p tsconfig.json -s ./src -o ./dist",
-    "restart": "npm run build && pm2 restart dist/app.js"
+    "restart": "pm2 restart dist/app.js"
   },
   "author": "",
   "license": "ISC",
