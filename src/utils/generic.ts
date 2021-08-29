@@ -16,7 +16,7 @@ export const formatResponseForUI = (input: Record<number, TableRow>) => {
           ({ duration, leads, history }) => ({
             duration,
             leads,
-            value: history[0],
+            value: Number(history[0]).toFixed(2),
           })
         ),
       };

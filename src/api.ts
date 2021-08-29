@@ -35,6 +35,10 @@ marketApiRouter.post("/data", async (req: Request, res: Response) => {
   res.json(calculator.data());
 });
 
+marketApiRouter.get("/active-users", (_req, res: Response) => {
+  res.json(activeUsers.getActive());
+});
+
 marketApiRouter.use((err: Error, _req: Request, res: Response) => {
   const message = JSON.stringify(err);
   console.trace(err);
