@@ -18,10 +18,12 @@ let ActiveUsers = ActiveUsers_1 = class ActiveUsers {
         this.add = (token) => {
             var _a;
             const currentScore = (_a = this.liveMap[token]) !== null && _a !== void 0 ? _a : 0;
-            this.liveMap[token] =
-                currentScore < ActiveUsers_1.MAX_SCORE
-                    ? currentScore + 1
-                    : ActiveUsers_1.MAX_SCORE;
+            if (token) {
+                this.liveMap[token] =
+                    currentScore < ActiveUsers_1.MAX_SCORE
+                        ? currentScore + 1
+                        : ActiveUsers_1.MAX_SCORE;
+            }
         };
         this.decrementScore = () => {
             const newMap = {};
@@ -33,7 +35,7 @@ let ActiveUsers = ActiveUsers_1 = class ActiveUsers {
             this.liveMap = newMap;
         };
         this.getActive = () => {
-            return Object.keys(this.liveMap);
+            return Object.keys(this.liveMap).filter((token) => !!token);
         };
         this._init = () => {
             setInterval(this.decrementScore, ActiveUsers_1.DECREMENT_AFTER);

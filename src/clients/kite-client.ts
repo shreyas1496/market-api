@@ -81,7 +81,7 @@ export class KiteClient {
     const items = Object.values(SCRIPTS);
     console.log(items);
 
-    this.ticker.autoReconnect(true, 50, 5);
+    this.ticker.autoReconnect(true, 10, 20);
     this.ticker.on("ticks", (ticks: RawTick[]) => {
       onTicks(
         ticks.map(({ instrument_token, last_price, ...others }) => ({

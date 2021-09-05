@@ -12,10 +12,12 @@ export class ActiveUsers {
 
   add = (token: string) => {
     const currentScore = this.liveMap[token] ?? 0;
-    this.liveMap[token] =
-      currentScore < ActiveUsers.MAX_SCORE
-        ? currentScore + 1
-        : ActiveUsers.MAX_SCORE;
+    if (token) {
+      this.liveMap[token] =
+        currentScore < ActiveUsers.MAX_SCORE
+          ? currentScore + 1
+          : ActiveUsers.MAX_SCORE;
+    }
   };
 
   decrementScore = () => {
@@ -29,7 +31,7 @@ export class ActiveUsers {
   };
 
   getActive = (): string[] => {
-    return Object.keys(this.liveMap);
+    return Object.keys(this.liveMap).filter((token) => !!token);
   };
 
   _init = () => {
