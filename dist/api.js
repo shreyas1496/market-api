@@ -7,11 +7,14 @@ exports.marketApiRouter = void 0;
 const express_1 = require("express");
 const typedi_1 = __importDefault(require("typedi"));
 const clients_1 = require("./clients");
+const services_1 = require("./services");
+const types_1 = require("./types");
 const utils_1 = require("./utils");
 exports.marketApiRouter = express_1.Router();
 const kite = typedi_1.default.get(clients_1.KiteClient);
 const activeUsers = typedi_1.default.get(utils_1.ActiveUsers);
 const calculator = typedi_1.default.get(utils_1.Calculator);
+const fcm = typedi_1.default.get(services_1.FCMService);
 exports.marketApiRouter.get("/init", (_req, res) => {
     res.redirect(kite.getLoginUrl());
 });
@@ -34,6 +37,10 @@ exports.marketApiRouter.post("/data", async (req, res) => {
 });
 exports.marketApiRouter.get("/active-users", (_req, res) => {
     res.json(activeUsers.getActive());
+});
+exports.marketApiRouter.get("/test", (_req, res) => {
+    fcm.send("hello", types_1.MessageType.TEST);
+    res.status(200).send();
 });
 exports.marketApiRouter.use((err, _req, res) => {
     const message = JSON.stringify(err);

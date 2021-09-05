@@ -1,12 +1,15 @@
 import { NextFunction, Request, Response, Router } from "express";
 import Container from "typedi";
 import { KiteClient } from "./clients";
+import { FCMService } from "./services";
+import { MessageType } from "./types";
 import { ActiveUsers, Calculator } from "./utils";
 
 export const marketApiRouter = Router();
 const kite = Container.get(KiteClient);
 const activeUsers = Container.get(ActiveUsers);
 const calculator = Container.get(Calculator);
+const fcm = Container.get(FCMService);
 
 marketApiRouter.get("/init", (_req: Request, res: Response) => {
   res.redirect(kite.getLoginUrl());
@@ -37,6 +40,11 @@ marketApiRouter.post("/data", async (req: Request, res: Response) => {
 
 marketApiRouter.get("/active-users", (_req, res: Response) => {
   res.json(activeUsers.getActive());
+});
+
+marketApiRouter.get("/test", (_req, res: Response) => {
+  fcm.send("hello", MessageType.TEST);
+  res.status(200).send();
 });
 
 marketApiRouter.use((err: Error, _req: Request, res: Response) => {
