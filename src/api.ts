@@ -43,13 +43,24 @@ marketApiRouter.get("/active-users", (_req, res: Response) => {
 });
 
 marketApiRouter.get("/test", (_req, res: Response) => {
-  fcm.send("hello", MessageType.TEST);
+  fcm.send({
+    type: MessageType.TEST,
+    title: "Hello",
+  });
   res.status(200).send();
 });
 
+marketApiRouter.get("/info", (_req, res: Response) => {
+  res.json(calculator.rawData());
+});
+
 marketApiRouter.use((err: Error, _req: Request, res: Response) => {
-  const message = JSON.stringify(err);
-  console.trace(err);
   res.status(500);
-  res.send(message);
+  try {
+    const message = JSON.stringify(err);
+    console.trace(err);
+    res.send(message);
+  } catch {
+    res.send("Unprocessable error");
+  }
 });

@@ -8,21 +8,38 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 var Calculator_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Calculator = void 0;
+const cloneDeep_1 = __importDefault(require("lodash/cloneDeep"));
 const typedi_1 = require("typedi");
 const clients_1 = require("../clients");
 const constants_1 = require("../constants");
+const services_1 = require("../services");
 const types_1 = require("../types");
 const _1 = require(".");
 let Calculator = Calculator_1 = class Calculator {
     constructor() {
+        this.isWarmingUpCache = false;
         this.data = () => _1.formatResponseForUI(Calculator_1.instrumentTableRowMap);
+        this.rawData = () => Calculator_1.instrumentTableRowMap;
         this.startServer = async (requestToken) => {
-            return this.kite
-                .startKiteServer(requestToken, this.seedData, this.onTicks)
-                .catch(console.log);
+            try {
+                this.isWarmingUpCache = true;
+                await this.kite.startKiteServer(requestToken, this.seedData, this.onTicks);
+            }
+            catch (error) {
+                console.log(error);
+            }
+            finally {
+                this.isWarmingUpCache = false;
+                setTimeout(() => {
+                    this.isWarmingUpCache = false;
+                }, constants_1.TICKS_WARMUP_DELAY);
+            }
         };
         this.seedData = async () => {
             const raw = await Promise.all(Object.entries(constants_1.SCRIPTS).map(([name, instrumentToken], index) => {
@@ -58,10 +75,17 @@ let Calculator = Calculator_1 = class Calculator {
                     }
                     counter++;
                 }
+                const movingAverage = history[0];
+                const deviation = Math.abs(movingAverage * constants_1.CLOSENESS_FACTOR);
+                const left = movingAverage - deviation;
+                const right = movingAverage + deviation;
+                const range = [left, right];
                 return {
                     duration,
                     history,
                     leads,
+                    bucketRange: range,
+                    isInBucket: this.isInBucket(ltp, range),
                 };
             });
             return {
@@ -70,6 +94,7 @@ let Calculator = Calculator_1 = class Calculator {
                 ltp,
                 closeHistory,
                 movingAverageValues,
+                notificationsFired: 0,
             };
         };
         this.onTicks = (ticks) => {
@@ -77,8 +102,44 @@ let Calculator = Calculator_1 = class Calculator {
                 const entry = Calculator_1.instrumentTableRowMap[instrumentToken];
                 if (entry) {
                     entry.ltp = lastPrice;
+                    if (entry.notificationsFired < constants_1.MAX_NOTIFICATION_PER_STOCK_PER_DAY) {
+                        Calculator_1.instrumentTableRowMap[instrumentToken] =
+                            this.lookupForNotification(lastPrice, entry);
+                    }
                 }
             });
+        };
+        this.isInBucket = (ltp, range) => {
+            const [left, right] = range;
+            return ltp > left && ltp < right;
+        };
+        this.lookupForNotification = (ltp, entry) => {
+            const newEntry = cloneDeep_1.default(entry);
+            newEntry.movingAverageValues = entry.movingAverageValues.map(({ bucketRange, isInBucket, duration, history, leads }) => {
+                const latestIsInBucket = this.isInBucket(ltp, bucketRange);
+                if (latestIsInBucket !== isInBucket) {
+                    console.log(entry, duration);
+                    if (!this.isWarmingUpCache) {
+                        newEntry.notificationsFired++;
+                        this.notificationService.send({
+                            ma: {
+                                data: entry,
+                                duration,
+                                isInBucket: latestIsInBucket,
+                            },
+                            type: types_1.MessageType.MA_CLOSENESS,
+                        });
+                    }
+                }
+                return {
+                    isInBucket: latestIsInBucket,
+                    bucketRange,
+                    duration,
+                    history,
+                    leads,
+                };
+            });
+            return newEntry;
         };
     }
 };
@@ -87,6 +148,10 @@ __decorate([
     typedi_1.Inject(() => clients_1.KiteClient),
     __metadata("design:type", clients_1.KiteClient)
 ], Calculator.prototype, "kite", void 0);
+__decorate([
+    typedi_1.Inject(() => services_1.FCMService),
+    __metadata("design:type", services_1.FCMService)
+], Calculator.prototype, "notificationService", void 0);
 Calculator = Calculator_1 = __decorate([
     typedi_1.Service()
 ], Calculator);

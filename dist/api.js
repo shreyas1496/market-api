@@ -39,13 +39,24 @@ exports.marketApiRouter.get("/active-users", (_req, res) => {
     res.json(activeUsers.getActive());
 });
 exports.marketApiRouter.get("/test", (_req, res) => {
-    fcm.send("hello", types_1.MessageType.TEST);
+    fcm.send({
+        type: types_1.MessageType.TEST,
+        title: "Hello",
+    });
     res.status(200).send();
 });
+exports.marketApiRouter.get("/info", (_req, res) => {
+    res.json(calculator.rawData());
+});
 exports.marketApiRouter.use((err, _req, res) => {
-    const message = JSON.stringify(err);
-    console.trace(err);
     res.status(500);
-    res.send(message);
+    try {
+        const message = JSON.stringify(err);
+        console.trace(err);
+        res.send(message);
+    }
+    catch (_a) {
+        res.send("Unprocessable error");
+    }
 });
 //# sourceMappingURL=api.js.map

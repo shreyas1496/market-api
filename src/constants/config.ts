@@ -1,0 +1,3 @@
+export const TICKS_WARMUP_DELAY = 30000;
+export const CLOSENESS_FACTOR = 0.003;
+export const MAX_NOTIFICATION_PER_STOCK_PER_DAY = 30;

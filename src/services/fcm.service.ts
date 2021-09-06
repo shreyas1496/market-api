@@ -1,7 +1,7 @@
-import { MessageType, MessagingService, TableRow } from "~/types";
 import admin from "firebase-admin";
 import { Inject, Service } from "typedi";
-import { ActiveUsers } from "~/utils";
+import { MessageOptions, MessageType, MessagingService } from "~/types";
+import { ActiveUsers, errorHandler } from "~/utils";
 
 var serviceAccount = require("/opt/account.json");
 
@@ -16,40 +16,58 @@ export class FCMService implements MessagingService {
   @Inject(() => ActiveUsers)
   private activeUsers!: ActiveUsers;
 
-  send = (
-    name: string,
-    type: MessageType,
-    data?: TableRow | undefined
-  ): Promise<void> => {
-    console.log(data);
+  send = (options: MessageOptions): Promise<void> => {
+    const notification = this.buildNotification(options);
+    const tokens = this.activeUsers.getActive();
 
-    return admin
-      .messaging()
-      .sendMulticast({
-        tokens: this.activeUsers.getActive(),
-        fcmOptions: {
-          analyticsLabel: "anything",
-        },
-        notification: {
-          title: "hawa hawai",
-          body: "ab tak 56",
-        },
-        webpush: {
+    if (notification && tokens.length > 0) {
+      return admin
+        .messaging()
+        .sendMulticast({
+          tokens,
           fcmOptions: {
-            link: "https://shreyas1496.tech",
+            analyticsLabel: "anything",
           },
-          notification: {
-            title: name,
-            body: type,
-            requireInteraction: true,
+          webpush: {
+            fcmOptions: {
+              link: "https://shreyas1496.tech",
+            },
+            notification,
+            data: {
+              random: "value",
+            },
           },
-          data: {
-            random: "value",
-          },
-        },
-      })
-      .then((response) => {
-        console.log(JSON.stringify(response));
-      });
+        })
+        .then((response) => {
+          console.log(JSON.stringify(response));
+        })
+        .catch(errorHandler("Firebase"));
+    }
+
+    return Promise.resolve();
+  };
+
+  private buildNotification = (
+    options: MessageOptions
+  ): admin.messaging.WebpushNotification | null => {
+    const { type, body, ma, title } = options;
+    if (type === MessageType.MA_CLOSENESS && ma) {
+      const { data, duration, isInBucket } = ma;
+      return {
+        title: `${data.name} @ ${data.ltp}`,
+        body: isInBucket
+          ? `Trading close to ${duration} DMA line`
+          : `Moving away from ${duration} DMA line`,
+        requireInteraction: true,
+      };
+    } else if (!!title) {
+      return {
+        title,
+        body: body ?? type,
+        requireInteraction: true,
+      };
+    } else {
+      return null;
+    }
   };
 }

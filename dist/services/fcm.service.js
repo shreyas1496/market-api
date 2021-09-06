@@ -15,40 +15,61 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.FCMService = void 0;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const typedi_1 = require("typedi");
+const types_1 = require("../types");
 const utils_1 = require("../utils");
 var serviceAccount = require("/opt/account.json");
 let FCMService = class FCMService {
     constructor() {
-        this.send = (name, type, data) => {
-            console.log(data);
-            return firebase_admin_1.default
-                .messaging()
-                .sendMulticast({
-                tokens: this.activeUsers.getActive(),
-                fcmOptions: {
-                    analyticsLabel: "anything",
-                },
-                notification: {
-                    title: "hawa hawai",
-                    body: "ab tak 56",
-                },
-                webpush: {
+        this.send = (options) => {
+            const notification = this.buildNotification(options);
+            const tokens = this.activeUsers.getActive();
+            if (notification && tokens.length > 0) {
+                return firebase_admin_1.default
+                    .messaging()
+                    .sendMulticast({
+                    tokens,
                     fcmOptions: {
-                        link: "https://shreyas1496.tech",
+                        analyticsLabel: "anything",
                     },
-                    notification: {
-                        title: name,
-                        body: type,
-                        requireInteraction: true,
+                    webpush: {
+                        fcmOptions: {
+                            link: "https://shreyas1496.tech",
+                        },
+                        notification,
+                        data: {
+                            random: "value",
+                        },
                     },
-                    data: {
-                        random: "value",
-                    },
-                },
-            })
-                .then((response) => {
-                console.log(JSON.stringify(response));
-            });
+                })
+                    .then((response) => {
+                    console.log(JSON.stringify(response));
+                })
+                    .catch(utils_1.errorHandler("Firebase"));
+            }
+            return Promise.resolve();
+        };
+        this.buildNotification = (options) => {
+            const { type, body, ma, title } = options;
+            if (type === types_1.MessageType.MA_CLOSENESS && ma) {
+                const { data, duration, isInBucket } = ma;
+                return {
+                    title: `${data.name} @ ${data.ltp}`,
+                    body: isInBucket
+                        ? `Trading close to ${duration} DMA line`
+                        : `Moving away from ${duration} DMA line`,
+                    requireInteraction: true,
+                };
+            }
+            else if (!!title) {
+                return {
+                    title,
+                    body: body !== null && body !== void 0 ? body : type,
+                    requireInteraction: true,
+                };
+            }
+            else {
+                return null;
+            }
         };
         firebase_admin_1.default.initializeApp({
             credential: firebase_admin_1.default.credential.cert(serviceAccount),

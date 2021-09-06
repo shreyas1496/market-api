@@ -3,9 +3,20 @@ import { TableRow } from ".";
 export enum MessageType {
   TEST = "test",
   DIRECTION_CROSSOVER = "direction-crossover",
-  MA_CROSSOVER = "ma-crossover",
+  MA_CLOSENESS = "ma-closeness",
+}
+
+export interface MessageOptions {
+  type: MessageType;
+  title?: string;
+  body?: string;
+  ma?: {
+    duration: number;
+    isInBucket: boolean;
+    data: TableRow;
+  };
 }
 
 export interface MessagingService {
-  send: (name: string, type: MessageType, data?: TableRow) => Promise<void>;
+  send: (options: MessageOptions) => Promise<void>;
 }
