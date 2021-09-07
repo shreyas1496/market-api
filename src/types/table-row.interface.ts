@@ -1,9 +1,9 @@
 export interface MovingAverageValue {
   duration: number;
-  history: number[];
   leads: number;
-  bucketRange: number[];
   isInBucket: boolean;
+  bucketRange: number[];
+  history: number[];
 }
 
 export interface TableRow {
@@ -11,6 +11,7 @@ export interface TableRow {
   name: string;
   ltp: number;
   notificationsFired: number;
+  fireAfter: number;
   closeHistory: number[];
   movingAverageValues: MovingAverageValue[];
 }

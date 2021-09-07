@@ -34,6 +34,11 @@ let ActiveUsers = ActiveUsers_1 = class ActiveUsers {
             });
             this.liveMap = newMap;
         };
+        this.removeToken = (token) => {
+            if (token) {
+                delete this.liveMap[token];
+            }
+        };
         this.getActive = () => {
             return Object.keys(this.liveMap).filter((token) => !!token);
         };

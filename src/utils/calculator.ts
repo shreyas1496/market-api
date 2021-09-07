@@ -6,6 +6,7 @@ import {
   CLOSENESS_FACTOR,
   MAX_NOTIFICATION_PER_STOCK_PER_DAY,
   SCRIPTS,
+  SILENCE_FOR_MS,
   TICKS_WARMUP_DELAY,
 } from "~/constants";
 import { FCMService } from "~/services";
@@ -109,10 +110,10 @@ export class Calculator {
 
         return {
           duration,
-          history,
           leads,
-          bucketRange: range,
           isInBucket: this.isInBucket(ltp, range),
+          bucketRange: range,
+          history,
         };
       }
     );
@@ -121,9 +122,10 @@ export class Calculator {
       instrumentToken,
       name,
       ltp,
+      notificationsFired: 0,
+      fireAfter: 0,
       closeHistory,
       movingAverageValues,
-      notificationsFired: 0,
     };
   };
 
@@ -147,14 +149,23 @@ export class Calculator {
 
   private lookupForNotification = (ltp: number, entry: TableRow): TableRow => {
     const newEntry = _clone(entry);
+    const now = Date.now();
     newEntry.movingAverageValues = entry.movingAverageValues.map(
       ({ bucketRange, isInBucket, duration, history, leads }) => {
         const latestIsInBucket = this.isInBucket(ltp, bucketRange);
+        const isSilenced = now < entry.fireAfter;
         if (latestIsInBucket !== isInBucket) {
-          console.log(entry, duration);
+          console.log(
+            entry.name,
+            duration,
+            latestIsInBucket ? "Close" : "Away",
+            entry.notificationsFired,
+            isSilenced
+          );
 
-          if (!this.isWarmingUpCache) {
+          if (!this.isWarmingUpCache && !isSilenced) {
             newEntry.notificationsFired++;
+            newEntry.fireAfter = now + SILENCE_FOR_MS;
             this.notificationService.send({
               ma: {
                 data: entry,
@@ -167,11 +178,11 @@ export class Calculator {
         }
 
         return {
+          duration,
+          leads,
           isInBucket: latestIsInBucket,
           bucketRange,
-          duration,
           history,
-          leads,
         };
       }
     );

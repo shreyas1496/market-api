@@ -82,19 +82,20 @@ let Calculator = Calculator_1 = class Calculator {
                 const range = [left, right];
                 return {
                     duration,
-                    history,
                     leads,
-                    bucketRange: range,
                     isInBucket: this.isInBucket(ltp, range),
+                    bucketRange: range,
+                    history,
                 };
             });
             return {
                 instrumentToken,
                 name,
                 ltp,
+                notificationsFired: 0,
+                fireAfter: 0,
                 closeHistory,
                 movingAverageValues,
-                notificationsFired: 0,
             };
         };
         this.onTicks = (ticks) => {
@@ -115,12 +116,15 @@ let Calculator = Calculator_1 = class Calculator {
         };
         this.lookupForNotification = (ltp, entry) => {
             const newEntry = cloneDeep_1.default(entry);
+            const now = Date.now();
             newEntry.movingAverageValues = entry.movingAverageValues.map(({ bucketRange, isInBucket, duration, history, leads }) => {
                 const latestIsInBucket = this.isInBucket(ltp, bucketRange);
+                const isSilenced = now < entry.fireAfter;
                 if (latestIsInBucket !== isInBucket) {
-                    console.log(entry, duration);
-                    if (!this.isWarmingUpCache) {
+                    console.log(entry.name, duration, latestIsInBucket ? "Close" : "Away", entry.notificationsFired, isSilenced);
+                    if (!this.isWarmingUpCache && !isSilenced) {
                         newEntry.notificationsFired++;
+                        newEntry.fireAfter = now + constants_1.SILENCE_FOR_MS;
                         this.notificationService.send({
                             ma: {
                                 data: entry,
@@ -132,11 +136,11 @@ let Calculator = Calculator_1 = class Calculator {
                     }
                 }
                 return {
+                    duration,
+                    leads,
                     isInBucket: latestIsInBucket,
                     bucketRange,
-                    duration,
                     history,
-                    leads,
                 };
             });
             return newEntry;

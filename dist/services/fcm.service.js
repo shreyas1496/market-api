@@ -42,7 +42,15 @@ let FCMService = class FCMService {
                     },
                 })
                     .then((response) => {
-                    console.log(JSON.stringify(response));
+                    response.responses.forEach((res, index) => {
+                        var _a;
+                        if (res.success === false &&
+                            ((_a = res.error) === null || _a === void 0 ? void 0 : _a.message) ===
+                                "messaging/registration-token-not-registered") {
+                            this.activeUsers.removeToken(tokens[index]);
+                        }
+                    });
+                    console.log(response.successCount, response.failureCount);
                 })
                     .catch(utils_1.errorHandler("Firebase"));
             }

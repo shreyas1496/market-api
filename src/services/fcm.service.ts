@@ -39,7 +39,16 @@ export class FCMService implements MessagingService {
           },
         })
         .then((response) => {
-          console.log(JSON.stringify(response));
+          response.responses.forEach((res, index) => {
+            if (
+              res.success === false &&
+              res.error?.message ===
+                "messaging/registration-token-not-registered"
+            ) {
+              this.activeUsers.removeToken(tokens[index]);
+            }
+          });
+          console.log(response.successCount, response.failureCount);
         })
         .catch(errorHandler("Firebase"));
     }

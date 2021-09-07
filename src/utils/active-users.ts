@@ -30,6 +30,12 @@ export class ActiveUsers {
     this.liveMap = newMap;
   };
 
+  removeToken = (token: string | undefined) => {
+    if (token) {
+      delete this.liveMap[token];
+    }
+  };
+
   getActive = (): string[] => {
     return Object.keys(this.liveMap).filter((token) => !!token);
   };
