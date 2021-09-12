@@ -36,9 +36,6 @@ let FCMService = class FCMService {
                             link: "https://shreyas1496.tech",
                         },
                         notification,
-                        data: {
-                            random: "value",
-                        },
                     },
                 })
                     .then((response) => {
@@ -50,7 +47,6 @@ let FCMService = class FCMService {
                             this.activeUsers.removeToken(tokens[index]);
                         }
                     });
-                    console.log(response.successCount, response.failureCount);
                 })
                     .catch(utils_1.errorHandler("Firebase"));
             }
@@ -59,12 +55,12 @@ let FCMService = class FCMService {
         this.buildNotification = (options) => {
             const { type, body, ma, title } = options;
             if (type === types_1.MessageType.MA_CLOSENESS && ma) {
-                const { data, duration, isInBucket } = ma;
+                const { data, duration, isInBucket, isAbove, leads } = ma;
                 return {
                     title: `${data.name} @ ${data.ltp}`,
                     body: isInBucket
-                        ? `Trading close to ${duration} DMA line`
-                        : `Moving away from ${duration} DMA line`,
+                        ? `Moving towards ${isAbove ? "above" : "below"} the ${duration} DMA line. Leads ${leads}`
+                        : `Moving away ${isAbove ? "above" : "below"} the ${duration} DMA line. Leads ${leads}`,
                     requireInteraction: true,
                 };
             }

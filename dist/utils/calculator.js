@@ -32,7 +32,7 @@ let Calculator = Calculator_1 = class Calculator {
                 await this.kite.startKiteServer(requestToken, this.seedData, this.onTicks);
             }
             catch (error) {
-                console.log(error);
+                console.error(error);
             }
             finally {
                 this.isWarmingUpCache = false;
@@ -55,7 +55,6 @@ let Calculator = Calculator_1 = class Calculator {
                 const closeHistory = data.map((hist) => hist.close);
                 Calculator_1.instrumentTableRowMap[instrumentToken] = this.getTableRow(instrumentToken, name, closeHistory);
             });
-            console.log("seeding complete");
         };
         this.getTableRow = (instrumentToken, name, closeHistory) => {
             var _a;
@@ -117,23 +116,30 @@ let Calculator = Calculator_1 = class Calculator {
         this.lookupForNotification = (ltp, entry) => {
             const newEntry = cloneDeep_1.default(entry);
             const now = Date.now();
-            newEntry.movingAverageValues = entry.movingAverageValues.map(({ bucketRange, isInBucket, duration, history, leads }) => {
+            newEntry.movingAverageValues = entry.movingAverageValues.map((block) => {
+                var _a;
+                const { bucketRange, isInBucket, duration, history, leads } = block;
                 const latestIsInBucket = this.isInBucket(ltp, bucketRange);
-                const isSilenced = now < entry.fireAfter;
-                if (latestIsInBucket !== isInBucket) {
-                    console.log(entry.name, duration, latestIsInBucket ? "Close" : "Away", entry.notificationsFired, isSilenced);
-                    if (!this.isWarmingUpCache && !isSilenced) {
-                        newEntry.notificationsFired++;
-                        newEntry.fireAfter = now + constants_1.SILENCE_FOR_MS;
-                        this.notificationService.send({
-                            ma: {
-                                data: entry,
-                                duration,
-                                isInBucket: latestIsInBucket,
-                            },
-                            type: types_1.MessageType.MA_CLOSENESS,
-                        });
-                    }
+                const shouldFire = now > entry.fireAfter;
+                const isDirectionChanged = latestIsInBucket !== isInBucket;
+                if (!this.isWarmingUpCache &&
+                    isDirectionChanged &&
+                    shouldFire &&
+                    this.fulfillsLeadsCriteria(block, ltp)) {
+                    newEntry.notificationsFired++;
+                    newEntry.fireAfter = now + constants_1.SILENCE_FOR_MS;
+                    const movingAverageValue = (_a = history[0]) !== null && _a !== void 0 ? _a : 0;
+                    console.log(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }), entry.name, ltp, movingAverageValue, duration, latestIsInBucket, leads);
+                    this.notificationService.send({
+                        ma: {
+                            data: entry,
+                            duration,
+                            isInBucket: latestIsInBucket,
+                            isAbove: ltp > movingAverageValue,
+                            leads,
+                        },
+                        type: types_1.MessageType.MA_CLOSENESS,
+                    });
                 }
                 return {
                     duration,
@@ -144,6 +150,13 @@ let Calculator = Calculator_1 = class Calculator {
                 };
             });
             return newEntry;
+        };
+        this.fulfillsLeadsCriteria = (block, ltp) => {
+            var _a, _b, _c;
+            const maValue = (_a = block.history[0]) !== null && _a !== void 0 ? _a : 0;
+            const maLeads = (_b = block.leads) !== null && _b !== void 0 ? _b : 0;
+            const maDurationHalf = ((_c = block.duration) !== null && _c !== void 0 ? _c : 0) / 2;
+            return ltp > maValue ? maLeads > maDurationHalf : maLeads < maDurationHalf;
         };
     }
 };

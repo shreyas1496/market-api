@@ -48,7 +48,7 @@ let ActiveUsers = ActiveUsers_1 = class ActiveUsers {
         this._init();
     }
 };
-ActiveUsers.MAX_SCORE = 12;
+ActiveUsers.MAX_SCORE = 24;
 ActiveUsers.DECREMENT_AFTER = 60 * 60 * 1000;
 ActiveUsers = ActiveUsers_1 = __decorate([
     typedi_1.Service(),

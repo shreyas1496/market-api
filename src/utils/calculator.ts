@@ -44,7 +44,7 @@ export class Calculator {
         this.onTicks
       );
     } catch (error) {
-      console.log(error);
+      console.error(error);
     } finally {
       this.isWarmingUpCache = false;
       setTimeout(() => {
@@ -74,7 +74,6 @@ export class Calculator {
         closeHistory
       );
     });
-    console.log("seeding complete");
   };
 
   private getTableRow = (
@@ -150,43 +149,63 @@ export class Calculator {
   private lookupForNotification = (ltp: number, entry: TableRow): TableRow => {
     const newEntry = _clone(entry);
     const now = Date.now();
-    newEntry.movingAverageValues = entry.movingAverageValues.map(
-      ({ bucketRange, isInBucket, duration, history, leads }) => {
-        const latestIsInBucket = this.isInBucket(ltp, bucketRange);
-        const isSilenced = now < entry.fireAfter;
-        if (latestIsInBucket !== isInBucket) {
-          console.log(
-            entry.name,
-            duration,
-            latestIsInBucket ? "Close" : "Away",
-            entry.notificationsFired,
-            isSilenced
-          );
+    newEntry.movingAverageValues = entry.movingAverageValues.map((block) => {
+      const { bucketRange, isInBucket, duration, history, leads } = block;
+      const latestIsInBucket = this.isInBucket(ltp, bucketRange);
+      const shouldFire = now > entry.fireAfter;
+      const isDirectionChanged = latestIsInBucket !== isInBucket;
 
-          if (!this.isWarmingUpCache && !isSilenced) {
-            newEntry.notificationsFired++;
-            newEntry.fireAfter = now + SILENCE_FOR_MS;
-            this.notificationService.send({
-              ma: {
-                data: entry,
-                duration,
-                isInBucket: latestIsInBucket,
-              },
-              type: MessageType.MA_CLOSENESS,
-            });
-          }
-        }
-
-        return {
+      if (
+        !this.isWarmingUpCache &&
+        isDirectionChanged &&
+        shouldFire &&
+        this.fulfillsLeadsCriteria(block, ltp)
+      ) {
+        newEntry.notificationsFired++;
+        newEntry.fireAfter = now + SILENCE_FOR_MS;
+        const movingAverageValue = history[0] ?? 0;
+        console.log(
+          new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }),
+          entry.name,
+          ltp,
+          movingAverageValue,
           duration,
-          leads,
-          isInBucket: latestIsInBucket,
-          bucketRange,
-          history,
-        };
+          latestIsInBucket,
+          leads
+        );
+
+        this.notificationService.send({
+          ma: {
+            data: entry,
+            duration,
+            isInBucket: latestIsInBucket,
+            isAbove: ltp > movingAverageValue,
+            leads,
+          },
+          type: MessageType.MA_CLOSENESS,
+        });
       }
-    );
+
+      return {
+        duration,
+        leads,
+        isInBucket: latestIsInBucket,
+        bucketRange,
+        history,
+      };
+    });
 
     return newEntry;
+  };
+
+  private fulfillsLeadsCriteria = (
+    block: MovingAverageValue,
+    ltp: number
+  ): boolean => {
+    const maValue = block.history[0] ?? 0;
+    const maLeads = block.leads ?? 0;
+    const maDurationHalf = (block.duration ?? 0) / 2;
+
+    return ltp > maValue ? maLeads > maDurationHalf : maLeads < maDurationHalf;
   };
 }

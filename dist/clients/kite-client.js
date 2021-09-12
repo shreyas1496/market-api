@@ -37,8 +37,6 @@ let KiteClient = class KiteClient {
                 setTimeout(() => {
                     const today = new Date();
                     const from = new Date(new Date().setDate(today.getDate() - days));
-                    // console.log(to, from);
-                    // return Promise.resolve({ to, from });
                     return resolve(this.instance
                         .getHistoricalData(instToken, "day", from, today, true)
                         .then((result) => result.reverse()));
@@ -53,7 +51,7 @@ let KiteClient = class KiteClient {
                     return resolve({ response });
                 })
                     .catch(function (err) {
-                    console.log(err);
+                    console.error(err);
                     reject(err);
                 });
             });
@@ -64,7 +62,6 @@ let KiteClient = class KiteClient {
                 access_token: accessToken,
             });
             const items = Object.values(constants_1.SCRIPTS);
-            console.log(items);
             this.ticker.autoReconnect(true, 10, 20);
             this.ticker.on("ticks", (ticks) => {
                 onTicks(ticks.map(({ instrument_token, last_price, ...others }) => ({

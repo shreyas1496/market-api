@@ -3,7 +3,7 @@ import { Service } from "typedi";
 @Service()
 export class ActiveUsers {
   private liveMap: Record<string, number> = {};
-  static MAX_SCORE = 12;
+  static MAX_SCORE = 24;
   static DECREMENT_AFTER = 60 * 60 * 1000;
 
   constructor() {

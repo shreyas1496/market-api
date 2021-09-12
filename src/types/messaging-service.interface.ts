@@ -14,6 +14,8 @@ export interface MessageOptions {
     duration: number;
     isInBucket: boolean;
     data: TableRow;
+    isAbove: boolean;
+    leads: number;
   };
 }
 

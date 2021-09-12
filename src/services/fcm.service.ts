@@ -33,9 +33,6 @@ export class FCMService implements MessagingService {
               link: "https://shreyas1496.tech",
             },
             notification,
-            data: {
-              random: "value",
-            },
           },
         })
         .then((response) => {
@@ -48,7 +45,6 @@ export class FCMService implements MessagingService {
               this.activeUsers.removeToken(tokens[index]);
             }
           });
-          console.log(response.successCount, response.failureCount);
         })
         .catch(errorHandler("Firebase"));
     }
@@ -61,12 +57,16 @@ export class FCMService implements MessagingService {
   ): admin.messaging.WebpushNotification | null => {
     const { type, body, ma, title } = options;
     if (type === MessageType.MA_CLOSENESS && ma) {
-      const { data, duration, isInBucket } = ma;
+      const { data, duration, isInBucket, isAbove, leads } = ma;
       return {
         title: `${data.name} @ ${data.ltp}`,
         body: isInBucket
-          ? `Trading close to ${duration} DMA line`
-          : `Moving away from ${duration} DMA line`,
+          ? `Moving towards ${
+              isAbove ? "above" : "below"
+            } the ${duration} DMA line. Leads ${leads}`
+          : `Moving away ${
+              isAbove ? "above" : "below"
+            } the ${duration} DMA line. Leads ${leads}`,
         requireInteraction: true,
       };
     } else if (!!title) {
