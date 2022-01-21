@@ -416,10 +416,6 @@ const raw = [
         name: "INDUSINDBK",
     },
     {
-        instrument_token: 2,
-        name: "INDUSINDBK",
-    },
-    {
         instrument_token: 13308418,
         name: "INDUSTOWER",
     },
