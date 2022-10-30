@@ -17,7 +17,7 @@ const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const typedi_1 = require("typedi");
 const types_1 = require("../types");
 const utils_1 = require("../utils");
-var serviceAccount = require("/opt/account.json");
+var serviceAccount = require("./account.json");
 let FCMService = class FCMService {
     constructor() {
         this.send = (options) => {
