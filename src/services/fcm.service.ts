@@ -3,7 +3,7 @@ import { Inject, Service } from "typedi";
 import { MessageOptions, MessageType, MessagingService } from "~/types";
 import { ActiveUsers, errorHandler } from "~/utils";
 
-var serviceAccount = require("/opt/account.json");
+var serviceAccount = require("./account.json")
 
 @Service()
 export class FCMService implements MessagingService {
