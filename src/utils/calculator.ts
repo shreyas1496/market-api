@@ -1,4 +1,3 @@
-import _range from "lodash/range";
 import _clone from "lodash/cloneDeep";
 import { Inject, Service } from "typedi";
 import { KiteClient } from "~/clients";
@@ -7,7 +6,7 @@ import {
   MAX_NOTIFICATION_PER_STOCK_PER_DAY,
   SCRIPTS,
   SILENCE_FOR_MS,
-  TICKS_WARMUP_DELAY,
+  TICKS_WARMUP_DELAY
 } from "~/constants";
 import { FCMService } from "~/services";
 import {
@@ -15,9 +14,12 @@ import {
   MessageType,
   movingAverageDurations,
   MovingAverageValue,
-  TableRow,
+  ProcessRow,
+  TableRow
 } from "~/types";
 import { formatResponseForUI } from ".";
+
+
 
 @Service()
 export class Calculator {
@@ -62,11 +64,16 @@ export class Calculator {
             data: res,
             name,
             instrumentToken,
-          }));
+          })).catch(e => {
+            console.error('error in fetching', name, instrumentToken, e)
+            return null;
+          })
       })
     );
 
-    raw.forEach(({ data, name, instrumentToken }) => {
+    const raw2 = raw.filter(x => x !== null) as ProcessRow[];
+
+    raw2.forEach(({ data, name, instrumentToken }) => {
       const closeHistory = data.map((hist) => hist.close);
       Calculator.instrumentTableRowMap[instrumentToken] = this.getTableRow(
         instrumentToken,

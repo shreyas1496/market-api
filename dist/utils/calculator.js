@@ -49,9 +49,13 @@ let Calculator = Calculator_1 = class Calculator {
                     data: res,
                     name,
                     instrumentToken,
-                }));
+                })).catch(e => {
+                    console.error('error in fetching', name, instrumentToken, e);
+                    return null;
+                });
             }));
-            raw.forEach(({ data, name, instrumentToken }) => {
+            const raw2 = raw.filter(x => x !== null);
+            raw2.forEach(({ data, name, instrumentToken }) => {
                 const closeHistory = data.map((hist) => hist.close);
                 Calculator_1.instrumentTableRowMap[instrumentToken] = this.getTableRow(instrumentToken, name, closeHistory);
             });

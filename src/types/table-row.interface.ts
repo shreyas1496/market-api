@@ -1,3 +1,5 @@
+import { HistRes } from "./kite.interface";
+
 export interface MovingAverageValue {
   duration: number;
   leads: number;
@@ -15,3 +17,6 @@ export interface TableRow {
   closeHistory: number[];
   movingAverageValues: MovingAverageValue[];
 }
+
+
+export interface ProcessRow { data: HistRes[]; name: string; instrumentToken: number }
